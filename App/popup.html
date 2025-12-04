@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>ChatGPT Folders</title>
+    <link rel="stylesheet" href="popup.css">
+</head>
+<body>
+    <header>
+        <h1>ChatGPT Folders</h1>
+    </header>
+    <main>
+        <section>
+            <label class="toggle">
+                <input type="checkbox" id="setting-folders-top">
+                <span>Keep folders at top</span>
+            </label>
+        </section>
+        <section>
+            <div class="section-title">Folder icon style</div>
+            <label class="option">
+                <input type="radio" name="icon-style" value="outline">
+                <span>Outline</span>
+            </label>
+            <label class="option">
+                <input type="radio" name="icon-style" value="fill">
+                <span>Fill</span>
+            </label>
+        </section>
+        <section>
+            <button id="create-folder-btn" type="button">Create New Folder</button>
+        </section>
+        <section class="folder-bulk-actions">
+            <div class="section-title">Folders</div>
+            <div class="button-row">
+                <button id="expand-all-btn" type="button">Expand All</button>
+                <button id="collapse-all-btn" type="button">Collapse All</button>
+            </div>
+        </section>
+        <section class="support">
+            <a id="support-link" href="https://buymeacoffee.com/glyndavidson" target="_blank" rel="noopener noreferrer">
+                ☕ Buy me a coffee
+            </a>
+        </section>
+        <section id="status" aria-live="polite"></section>
+    </main>
+    <script src="storageService.js"></script>
+    <script src="globalSettings.js"></script>
+    <script src="popup.js"></script>
+</body>
+</html>

@@ -1,0 +1,42 @@
+{
+  "manifest_version": 3,
+  "name": "ChatGPT Folder Tree Test",
+  "version": "0.1.0",
+  "description": "Reorder ChatGPT conversations and experiment with folders.",
+  "permissions": [
+    "storage",
+    "tabs"
+  ],
+  "action": {
+    "default_title": "ChatGPT Folders",
+    "default_popup": "popup.html"
+  },
+  "host_permissions": [
+    "https://chatgpt.com/*"
+  ],
+  "content_scripts": [
+    {
+      "matches": [
+        "https://chatgpt.com/*"
+      ],
+      "js": [
+        "draggableElement.js",
+        "chatItem.js",
+        "icons.js",
+        "folderItem.js",
+        "historyManager.js",
+        "folderMenu.js",
+        "folderManager.js",
+        "storageService.js",
+        "globalSettings.js",
+        "layoutState.js",
+        "dragController.js",
+        "main.js"
+      ],
+      "css": [
+        "folders.css"
+      ],
+      "run_at": "document_idle"
+    }
+  ]
+}

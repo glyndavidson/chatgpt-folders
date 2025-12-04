@@ -1,0 +1,165 @@
+/* Show 3-dot button only on hover/focus */
+.glyn-folder-row .__menu-item-trailing-btn {
+  opacity: 0;
+  transition: opacity 0.15s ease;
+}
+
+.glyn-folder-row:hover .__menu-item-trailing-btn,
+.glyn-folder-row .__menu-item-trailing-btn:focus-within {
+  opacity: 1;
+}
+
+/* Inline rename styling */
+.glyn-folder-label-editing {
+  outline: 1px solid rgba(255, 255, 255, 0.35);
+  border-radius: 4px;
+  padding: 0 2px;
+}
+
+/* Context menu container */
+.glyn-folder-menu {
+  position: fixed;
+  z-index: 9999;
+  min-width: 180px;
+  background: #353535;
+  border-radius: 12px;
+  padding: 6px 0;
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.45);
+  font-size: 14px;
+  color: white;
+}
+
+/* Menu buttons */
+.glyn-folder-menu button[data-action] {
+  width: 100%;
+  padding: 6px 12px;
+  text-align: left;
+  background: none;
+  border: none;
+  color: inherit;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* Color picker row: styled like a normal menu button */
+.glyn-folder-menu-color-row {
+  display: none;
+  /* hidden until activated */
+  padding: 6px 10px;
+  /* match ChatGPT menu button padding */
+  cursor: pointer;
+}
+
+.glyn-folder-menu-color-row:hover {
+  background: rgba(255, 255, 255, 0.07);
+}
+
+/* Make the input fill the whole row */
+.glyn-folder-menu-color-input {
+  width: 100%;
+  height: 26px;
+  /* visually matches button height */
+  border: none;
+  padding: 0;
+  margin: 0;
+  cursor: pointer;
+  border-radius: 4px;
+  background: transparent;
+}
+
+/* Delete colour */
+.glyn-folder-menu button[data-action="delete"] {
+  color: #f97373;
+}
+
+/* Hover background */
+.glyn-folder-menu button[data-action]:hover {
+  background: #4a4a4a;
+}
+
+/* Divider */
+.glyn-folder-menu hr {
+  border: 0;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  margin: 6px 0;
+}
+
+/* Icon wrapper */
+.glyn-folder-menu-icon {
+  width: 16px;
+  height: 16px;
+  display: inline-flex;
+}
+
+.glyn-folder-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.glyn-folder-confirm-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.6);
+  display: none;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  z-index: 10000;
+}
+
+.glyn-folder-confirm-dialog {
+  background: #212121;
+  color: #fff;
+  border-radius: 1rem;
+  max-width: 450px;
+  width: 100%;
+  padding: 24px;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.55);
+}
+
+.glyn-folder-confirm-body {
+  margin-top: 8px;
+  font-size: 14px;
+  line-height: 1.4;
+}
+
+.glyn-folder-confirm-body strong {
+  display: block;
+  margin-bottom: 8px;
+}
+
+.glyn-folder-confirm-name {
+  margin-top: 12px;
+  font-size: 13px;
+  color: rgba(255, 255, 255, 0.85);
+}
+
+.glyn-folder-confirm-actions {
+  margin-top: 20px;
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+}
+
+.glyn-folder-confirm-actions button {
+  border-radius: 8px;
+  border: 1px solid transparent;
+  padding: 6px 16px;
+  font-size: 14px;
+  cursor: pointer;
+}
+
+.glyn-folder-confirm-actions button[data-role="delete"] {
+  background: #e02e2a;
+  color: #fff;
+  border-color: #e02e2a;
+}
+
+.glyn-folder-confirm-actions button[data-role="cancel"] {
+  background: #2f2f2f;
+  color: #fff;
+  border-color: #ffffff26;
+}
