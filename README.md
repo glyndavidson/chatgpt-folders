@@ -33,7 +33,7 @@ No data is ever sent to external servers — everything stays inside Chrome’s 
 If you wish to review the data, you can download a copy at any time from the extension’s settings.
 
 For further details, see the complete Privacy Policy:
-https://github.com/glyndavidson/chatgpt-folders/blob/main/PRIVACY.md
+[https://github.com/glyndavidson/chatgpt-folders/blob/main/PRIVACY.md](https://github.com/glyndavidson/chatgpt-folders/blob/main/PRIVACY.md)
 <br><br>
 
 
