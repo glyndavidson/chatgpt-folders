@@ -1,3 +1,4 @@
+// @meta main.js bootstraps the content script, wiring managers, drag logic, and storage sync.
 const FORCE_FOLDERS_AT_TOP = false; // set true later if you want "folders at top" mode
 // 
 

@@ -1,4 +1,5 @@
 (function () {
+  // @meta FolderMenu renders the contextual actions menu for folders, including colour picker logic.
   const ns = (window.GlynGPT = window.GlynGPT || {});
   const Icons = ns.Icons || {};
 

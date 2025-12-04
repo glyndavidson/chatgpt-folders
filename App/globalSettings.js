@@ -1,4 +1,5 @@
 (function () {
+    // @meta GlobalSettings wraps chrome.storage.sync interactions for user preferences.
     const ns = (window.GlynGPT = window.GlynGPT || {});
 
     class GlobalSettings {

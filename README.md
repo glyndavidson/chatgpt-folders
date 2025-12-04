@@ -19,52 +19,29 @@ Install the extension from the Chrome Web Store:
 Link to follow.
 <br><br>
 
-## 🔒 Privacy & Data Handling
-Privacy is a core principle. The extension never reads, analyses, stores, or transmits the contents of your ChatGPT conversations.
+## 🔒 Privacy & Security
+ChatGPT Folders is designed with privacy first.  
+The extension never reads, stores, or shares any of your ChatGPT conversation text.  
+It only saves the minimal information required to organise your sidebar:  
+- folder names, colours, and structure
+- your UI preferences
+- ChatGPT conversation IDs only - no titles or content
 
-### What the extension _does_ store
-`chrome.storage.sync` keeps your folder structure synchronised safely across devices logged into the same Google account.
+The extension does not access chat messages, personal information, or anything you type into ChatGPT.  
+No data is ever sent to external servers — everything stays inside Chrome’s sync storage under your Google account and can be cleared at any time.
 
-Only the following data is stored:
-- Unique IDs of your ChatGPT conversations (not the titles).
-- Folder names, colours, and hierarchy created through the extension.
-- Which conversation IDs belong to which folders.
+If you wish to review the data, you can download a copy at any time from the extension’s settings.
 
-### What the extension does **not** store
-The extension never touches:
-- 🚫 Conversation titles  
-- 🚫 Conversation content or chat messages  
-- 🚫 Anything you type into ChatGPT  
-- 🚫 Personal data or OpenAI account info  
-- 🚫 Cookies, authentication tokens, or browser history
-
-It cannot read message bodies — it only interacts with the sidebar list and the URL.
-
-### What the extension sends or shares
-- ❌ No external servers
-- ❌ No analytics
-- ❌ No telemetry
-- ❌ No network requests of any kind
-
-All storage stays inside Chrome’s sync storage, controlled by your Google account. Clear it anytime via `chrome://settings/syncSetup/advanced` or by uninstalling the extension.
-
-### Why storage.sync?
-`storage.sync` keeps your folders available wherever you log in — laptop, desktop, office, home — without exports, cloud accounts, or manual backups.
+For further details, see the complete Privacy Policy:
+https://github.com/glyndavidson/chatgpt-folders/blob/main/PRIVACY.md
 <br><br>
 
-## 🛡️ Security
-- The extension does **not** modify network requests.  
-- It does **not** inject scripts outside of the ChatGPT domain.  
-- It runs only in the ChatGPT UI tab.  
-- It never requests extra permissions beyond what is required to display the folder tree.  
-- Your data stays local, minimal, and fully under your control — just how privacy should be.  
-**It cannot access or modify any of your chat history in any way.**
-<br><br>
 
 ## 👤 Author
-Glyn Davidson (and his buddy Max, the friendly Talkie Toaster).  
+Glyn Davidson  
 Developer, climber, and chronic tinkerer of occasionally useful tools.
 <br><br>
+
 
 ## ☕ Buy me a Coffee
 If you find this extension useful, please consider [buying me a coffee](https://buymeacoffee.com/glyndavidson) to support my work.

@@ -1,3 +1,4 @@
+/* @meta folders.css styles the custom folder rows, menus, and dialogs injected into the sidebar. */
 /* Show 3-dot button only on hover/focus */
 .glyn-folder-row .__menu-item-trailing-btn {
   opacity: 0;

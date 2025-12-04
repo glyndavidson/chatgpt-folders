@@ -1,4 +1,5 @@
 (function () {
+    // @meta StorageService abstracts chrome.storage/localStorage access for persistent data.
     const ns = (window.GlynGPT = window.GlynGPT || {});
 
     class StorageService {

@@ -1,8 +1,8 @@
 {
   "manifest_version": 3,
   "name": "ChatGPT Folder Tree Test",
-  "version": "0.1.0",
-  "description": "Reorder ChatGPT conversations and experiment with folders.",
+  "version": "1.0.1",
+  "description": "Reorder ChatGPT conversations and organise into folders.",
   "icons": {
     "16": "icon16.png",
     "32": "icon32.png",

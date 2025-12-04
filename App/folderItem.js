@@ -1,4 +1,5 @@
 (function () {
+    // @meta FolderItem models a sidebar folder row, handling children, metadata, and inline UI state.
     const ns = (window.GlynGPT = window.GlynGPT || {});
     const DraggableElement = ns.DraggableElement;
 

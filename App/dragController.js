@@ -1,4 +1,5 @@
 (function () {
+  // @meta DragController orchestrates drag-and-drop behavior between chats and folders in the sidebar.
   const ns = (window.GlynGPT = window.GlynGPT || {});
 
   class DragController {

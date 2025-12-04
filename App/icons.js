@@ -1,4 +1,5 @@
 (function () {
+    // @meta icons.js centralizes SVG fragments used across the extension UI.
     const ns = (window.GlynGPT = window.GlynGPT || {});
 
     const chevronRight =

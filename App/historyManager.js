@@ -1,4 +1,5 @@
 (function () {
+    // @meta HistoryManager keeps track of root-level chat ordering and emits layout change events.
     const ns = (window.GlynGPT = window.GlynGPT || {});
 
     class HistoryManager {

@@ -1,4 +1,5 @@
 (function () {
+  // @meta FolderManager owns folder creation, lookup, and persistence hooks for the sidebar tree.
   const ns = (window.GlynGPT = window.GlynGPT || {});
   const FolderItem = ns.FolderItem;
   const ChatItem = ns.ChatItem;

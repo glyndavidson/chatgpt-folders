@@ -1,4 +1,5 @@
 (function () {
+    // @meta DraggableElement centralizes drag event wiring shared by chat items and folder rows.
     const ns = (window.GlynGPT = window.GlynGPT || {});
 
     class DraggableElement {

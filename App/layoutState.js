@@ -1,4 +1,5 @@
 (function () {
+    // @meta LayoutState serializes folders/chats to storage and restores them on load.
     const ns = (window.GlynGPT = window.GlynGPT || {});
 
     class LayoutState {

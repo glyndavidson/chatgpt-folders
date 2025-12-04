@@ -1,4 +1,5 @@
 (function () {
+    // @meta ChatItem module wraps individual chat links as draggable elements within the sidebar.
     const ns = (window.GlynGPT = window.GlynGPT || {});
     const DraggableElement = ns.DraggableElement;
 

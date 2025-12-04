@@ -1,4 +1,5 @@
 (function () {
+    // @meta popup.js drives the extension popup UI, syncing settings and issuing sidebar commands.
     const ns = window.GlynGPT || {};
     const StorageService = ns.StorageService;
     const GlobalSettings = ns.GlobalSettings;
@@ -9,6 +10,7 @@
     const expandAllBtn = document.getElementById("expand-all-btn");
     const collapseAllBtn = document.getElementById("collapse-all-btn");
     const statusEl = document.getElementById("status");
+    const downloadDataLink = document.getElementById("download-data-link");
 
     if (!StorageService || !GlobalSettings) {
         statusEl.textContent = "Storage unavailable.";
@@ -91,6 +93,12 @@
                 handleFolderBulkAction("collapseAllFolders", "Collapsing folders...", "All folders collapsed.");
             });
         }
+        if (downloadDataLink) {
+            downloadDataLink.addEventListener("click", (e) => {
+                e.preventDefault();
+                exportDataSnapshot();
+            });
+        }
     }
 
     async function handleSettingChange(partial) {
@@ -166,13 +174,34 @@
         }
         if (response && response.error) {
             if (response.isConnectionError) {
-                statusEl.textContent = "Please open chat.openai.com (or chatgpt.com) and try again.";
+                statusEl.textContent = "Please open chatgpt.com and try again.";
             } else {
                 statusEl.textContent = `${failurePrefix} (${response.error}).`;
             }
             return;
         }
-        statusEl.textContent = "Please open chat.openai.com (or chatgpt.com) and try again.";
+        statusEl.textContent = "Please open chatgpt.com and try again.";
+    }
+
+    async function exportDataSnapshot() {
+        try {
+            statusEl.textContent = "Preparing download...";
+            const data = await storage.load({});
+            const serialized = JSON.stringify(data || {}, null, 2);
+            const blob = new Blob([serialized], { type: "application/json" });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement("a");
+            a.href = url;
+            a.download = "chatgpt-folders-data.json";
+            document.body.appendChild(a);
+            a.click();
+            a.remove();
+            URL.revokeObjectURL(url);
+            statusEl.textContent = "Data downloaded.";
+        } catch (err) {
+            console.warn("[GlynGPT] Failed to export data", err);
+            statusEl.textContent = "Could not export data.";
+        }
     }
 
     function isChatGptTab(tab) {
@@ -180,7 +209,7 @@
         try {
             const url = new URL(tab.url);
             const host = (url.hostname || "").toLowerCase();
-            return host === "chatgpt.com" || host === "chat.openai.com";
+            return host === "chatgpt.com";
         } catch (_err) {
             return false;
         }
