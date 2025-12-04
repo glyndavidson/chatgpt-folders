@@ -26,6 +26,9 @@ const FORCE_FOLDERS_AT_TOP = false; // set true later if you want "folders at to
     let highlightedFolderRow = null;
     window.FOLDER_ICON_STYLE = window.FOLDER_ICON_STYLE || "outline";
     let messageListenerBound = false;
+    let historyObserver = null;
+    let containerMonitorTimer = null;
+    let reinitPending = false;
 
     function scheduleSave(opts) {
         if (layoutState) {
@@ -72,6 +75,33 @@ const FORCE_FOLDERS_AT_TOP = false; // set true later if you want "folders at to
         if (options && options.persist) {
             scheduleSave({ immediate: true });
         }
+    }
+
+    function findHistoryContainer() {
+        const selectors = [
+            "#history",
+            '[data-testid="conversation-sidebar-list"]',
+            '[data-testid="conversation-list"]',
+            'nav[aria-label="Chat history"] ol',
+            'nav[aria-label="Chat history"] div[data-testid="conversation-list"]',
+            'nav[aria-label="Chat history"] div[role="presentation"]'
+        ];
+        for (const selector of selectors) {
+            const el = document.querySelector(selector);
+            if (el) {
+                return el;
+            }
+        }
+        const nav = document.querySelector('nav[aria-label="Chat history"]');
+        if (nav) {
+            const scroll = Array.from(nav.querySelectorAll("div")).find(div =>
+                div.scrollHeight > div.clientHeight && div.querySelector("a.__menu-item")
+            );
+            if (scroll) {
+                return scroll;
+            }
+        }
+        return null;
     }
 
     function ensureMessageListener() {
@@ -322,14 +352,62 @@ const FORCE_FOLDERS_AT_TOP = false; // set true later if you want "folders at to
     function observeHistory() {
         makeRootLinksDraggable();
 
-        const observer = new MutationObserver(() => {
+        if (historyObserver) {
+            historyObserver.disconnect();
+        }
+
+        historyObserver = new MutationObserver(() => {
             makeRootLinksDraggable();
         });
 
-        observer.observe(historyDiv, {
+        historyObserver.observe(historyDiv, {
             childList: true,
             subtree: false
         });
+    }
+
+    function stopHistoryObserver() {
+        if (historyObserver) {
+            historyObserver.disconnect();
+            historyObserver = null;
+        }
+    }
+
+    function startContainerMonitor() {
+        stopContainerMonitor();
+        containerMonitorTimer = setInterval(() => {
+            if (!historyDiv || !document.contains(historyDiv)) {
+                scheduleReinit("container-detached");
+            }
+        }, 1000);
+    }
+
+    function stopContainerMonitor() {
+        if (containerMonitorTimer) {
+            clearInterval(containerMonitorTimer);
+            containerMonitorTimer = null;
+        }
+    }
+
+    function scheduleReinit(reason) {
+        if (reinitPending) return;
+        reinitPending = true;
+        console.warn("[GlynGPT] Reinitialising folders:", reason);
+        stopHistoryObserver();
+        stopContainerMonitor();
+        hideDropMarker();
+        historyManager = null;
+        folderManager = null;
+        folderMenu = null;
+        dragController = null;
+        layoutState = null;
+        storageService = null;
+        globalSettings = null;
+        setTimeout(() => {
+            reinitPending = false;
+            historyDiv = null;
+            init();
+        }, 300);
     }
 
     function initOnceHistoryFound() {
@@ -423,6 +501,7 @@ const FORCE_FOLDERS_AT_TOP = false; // set true later if you want "folders at to
             .finally(() => {
                 bindChangeHandlers();
                 observeHistory();
+                startContainerMonitor();
             });
     }
 
@@ -430,7 +509,7 @@ const FORCE_FOLDERS_AT_TOP = false; // set true later if you want "folders at to
         let attempts = 0;
 
         function check() {
-            historyDiv = document.getElementById("history");
+            historyDiv = findHistoryContainer();
 
             if (historyDiv) {
                 initOnceHistoryFound();

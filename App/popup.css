@@ -67,19 +67,17 @@ button:disabled {
     flex: 1;
 }
 
+.support {
+    font-size: 12px;
+    color: #ccc;
+    line-height: 1.5;
+}
+
 .support a {
-    display: inline-flex;
-    width: 100%;
-    justify-content: center;
-    padding: 8px;
-    border-radius: 6px;
-    background: #2b2b2b;
-    color: #fff;
-    text-decoration: none;
-    font-size: 14px;
-    border: 1px solid rgba(255, 255, 255, 0.1);
+    color: #9be0cb;
+    text-decoration: underline;
 }
 
 .support a:hover {
-    background: #363636;
+    color: #b8ffe7;
 }

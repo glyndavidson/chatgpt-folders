@@ -114,13 +114,7 @@
     async function requestNewFolder() {
         statusEl.textContent = "Requesting new folder...";
         const response = await notifyActiveTab({ glynCommand: "createFolder" });
-        if (response && response.ok) {
-            statusEl.textContent = "Folder created.";
-        } else if (response && response.error) {
-            statusEl.textContent = `Unable to create folder (${response.error}).`;
-        } else {
-            statusEl.textContent = "Open chat.openai.com and try again.";
-        }
+        handleActionResponse(response, "Folder created.", "Unable to create folder");
     }
 
     function notifyActiveTab(message) {
@@ -134,9 +128,14 @@
                     resolve(null);
                     return;
                 }
-                chrome.tabs.sendMessage(tabs[0].id, message, (response) => {
+                const tab = tabs[0];
+                if (!isChatGptTab(tab)) {
+                    resolve({ ok: false, error: "not-chatgpt-tab", isConnectionError: true });
+                    return;
+                }
+                chrome.tabs.sendMessage(tab.id, message, (response) => {
                     if (chrome.runtime.lastError) {
-                        resolve({ ok: false, error: chrome.runtime.lastError.message });
+                        resolve({ ok: false, error: chrome.runtime.lastError.message, isConnectionError: true });
                         return;
                     }
                     resolve(response || null);
@@ -151,18 +150,39 @@
         statusEl.textContent = workingMessage || "Updating folders...";
         try {
             const response = await notifyActiveTab({ glynCommand: command });
-            if (response && response.ok) {
-                statusEl.textContent = successMessage || "Done.";
-            } else if (response && response.error) {
-                statusEl.textContent = `Unable to update folders (${response.error}).`;
-            } else {
-                statusEl.textContent = "Open chat.openai.com and try again.";
-            }
+            handleActionResponse(response, successMessage || "Done.", "Unable to update folders");
         } catch (err) {
             console.warn("[GlynGPT] Failed to update folders", err);
             statusEl.textContent = "Could not update folders.";
         } finally {
             setBulkButtonsDisabled(false);
+        }
+    }
+
+    function handleActionResponse(response, successMessage, failurePrefix) {
+        if (response && response.ok) {
+            statusEl.textContent = successMessage;
+            return;
+        }
+        if (response && response.error) {
+            if (response.isConnectionError) {
+                statusEl.textContent = "Please open chat.openai.com (or chatgpt.com) and try again.";
+            } else {
+                statusEl.textContent = `${failurePrefix} (${response.error}).`;
+            }
+            return;
+        }
+        statusEl.textContent = "Please open chat.openai.com (or chatgpt.com) and try again.";
+    }
+
+    function isChatGptTab(tab) {
+        if (!tab || !tab.url) return false;
+        try {
+            const url = new URL(tab.url);
+            const host = (url.hostname || "").toLowerCase();
+            return host === "chatgpt.com" || host === "chat.openai.com";
+        } catch (_err) {
+            return false;
         }
     }
 })();

@@ -81,12 +81,20 @@
       menu.appendChild(deleteBtn);
 
       // When the user picks a colour, call callback then close menu
-      input.addEventListener("change", () => {
+      const emitColor = () => {
         const folder = this.currentFolder;
         const color = input.value;
         if (folder && color && typeof this.onChangeColor === "function") {
           this.onChangeColor(folder, color);
         }
+      };
+
+      input.addEventListener("input", () => {
+        emitColor();
+      });
+
+      input.addEventListener("change", () => {
+        emitColor();
         this.hideColorPickerRow();
         this.close();
       });
