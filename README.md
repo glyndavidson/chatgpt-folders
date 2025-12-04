@@ -1,7 +1,9 @@
 ## 📚 Overview
 A Chrome extension to organise your ChatGPT conversations into folders and bring order to sprawling threads — all from inside the ChatGPT sidebar.  
-[Screenshot to follow]
+
+![Screenshot of ChatGPT with Folders in Sidebar](https://github.com/glyndavidson/chatgpt-folders/blob/main/screenshot.png?raw=true)
 <br><br>
+
 
 ## ✨ Features
 - 🧲 Drag-and-drop conversations anywhere in the sidebar for total ordering control.
