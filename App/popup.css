@@ -56,7 +56,7 @@ button:disabled {
 #status {
     min-height: 16px;
     font-size: 12px;
-    color: #9be0cb;
+    color: #fda600;
 }
 
 .folder-bulk-actions .button-row {
@@ -68,6 +68,10 @@ button:disabled {
     flex: 1;
 }
 
+#create-folder-btn{
+    margin-top: 10px;
+    background: #105ea3;
+}
 .support {
     font-size: 12px;
     color: #ccc;

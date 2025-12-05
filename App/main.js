@@ -16,8 +16,8 @@ const FORCE_FOLDERS_AT_TOP = false; // set true later if you want "folders at to
     const SIDEBAR_MIN_WIDTH = 220;
     const SIDEBAR_MAX_WIDTH = 520;
     const SIDEBAR_WIDTH_VAR = "--sidebar-width";
-    const ENABLE_SIDEBAR_RESIZER = false;
-    const ENABLE_SAFE_REINIT = false;
+    const ENABLE_SIDEBAR_RESIZER = true;
+    const ENABLE_SAFE_REINIT = true;
 
     let historyDiv = null;
     let historyManager = null;
@@ -547,6 +547,7 @@ const FORCE_FOLDERS_AT_TOP = false; // set true later if you want "folders at to
     }
 
     function enterSafeMode(reason) {
+        if (!ENABLE_SAFE_REINIT) return;
         if (safeModeActive) return;
         safeModeActive = true;
         console.warn("[GlynGPT] Entering safe mode:", reason);
@@ -567,10 +568,7 @@ const FORCE_FOLDERS_AT_TOP = false; // set true later if you want "folders at to
     }
 
     function scheduleReinit(reason) {
-        if (!ENABLE_SAFE_REINIT) {
-            console.warn("[GlynGPT] Reinit requested but safe reinit is disabled:", reason);
-            return;
-        }
+        if (!ENABLE_SAFE_REINIT) return;
         enterSafeMode(reason);
         if (reinitPending) return;
         reinitPending = true;

@@ -23,11 +23,7 @@
 
         async save() {
             if (!this.storage) return false;
-            const payload = await this.storage.load({});
-            const next = Object.assign({}, payload, {
-                [this.key]: this.values
-            });
-            return this.storage.save(next);
+            return this.storage.save({ [this.key]: this.values });
         }
 
         setForceFoldersTop(value) {

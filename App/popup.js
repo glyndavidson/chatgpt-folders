@@ -10,7 +10,10 @@
     const expandAllBtn = document.getElementById("expand-all-btn");
     const collapseAllBtn = document.getElementById("collapse-all-btn");
     const statusEl = document.getElementById("status");
-    const downloadDataLink = document.getElementById("download-data-link");
+    const exportDataBtn = document.getElementById("export-data-btn");
+    const importDataBtn = document.getElementById("import-data-btn");
+    const importFileInput = document.getElementById("import-file-input");
+
 
     if (!StorageService || !GlobalSettings) {
         statusEl.textContent = "Storage unavailable.";
@@ -93,10 +96,23 @@
                 handleFolderBulkAction("collapseAllFolders", "Collapsing folders...", "All folders collapsed.");
             });
         }
-        if (downloadDataLink) {
-            downloadDataLink.addEventListener("click", (e) => {
-                e.preventDefault();
-                exportDataSnapshot();
+        if (exportDataBtn) {
+            exportDataBtn.addEventListener("click", () => {
+                exportDataBtn.disabled = true;
+                exportDataSnapshot().finally(() => {
+                    exportDataBtn.disabled = false;
+                });
+            });
+        }
+        if (importDataBtn && importFileInput) {
+            importDataBtn.addEventListener("click", () => {
+                if (importDataBtn.disabled) return;
+                importFileInput.value = "";
+                importFileInput.click();
+            });
+            importFileInput.addEventListener("change", () => {
+                if (!importFileInput.files || !importFileInput.files.length) return;
+                importJsonFile(importFileInput.files[0]);
             });
         }
     }
@@ -202,6 +218,34 @@
             console.warn("[GlynGPT] Failed to export data", err);
             statusEl.textContent = "Could not export data.";
         }
+    }
+
+    function importJsonFile(file) {
+        if (!file) return;
+        importDataBtn.disabled = true;
+        statusEl.textContent = `Importing ${file.name}...`;
+        const reader = new FileReader();
+        reader.onload = async () => {
+            try {
+                const parsed = JSON.parse(reader.result);
+                if (!parsed || typeof parsed !== "object") {
+                    throw new Error("invalid-json");
+                }
+                await storage.save(parsed);
+                statusEl.textContent = "Import complete. Reload chatgpt.com to apply.";
+            } catch (err) {
+                console.warn("[GlynGPT] Failed to import data", err);
+                statusEl.textContent = "Could not import data. Please select a valid JSON export.";
+            } finally {
+                importDataBtn.disabled = false;
+            }
+        };
+        reader.onerror = () => {
+            console.warn("[GlynGPT] Failed to read file", reader.error);
+            statusEl.textContent = "Could not read the selected file.";
+            importDataBtn.disabled = false;
+        };
+        reader.readAsText(file);
     }
 
     function isChatGptTab(tab) {
