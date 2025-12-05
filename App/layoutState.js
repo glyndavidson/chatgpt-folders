@@ -233,11 +233,7 @@
             if (!this.storage) return false;
             const serialized = this.serialize();
             this.data = serialized;
-            const payload = await this.storage.load({});
-            const next = Object.assign({}, payload, {
-                [this.storageKey]: serialized
-            });
-            return this.storage.save(next);
+            return this.storage.save({ [this.storageKey]: serialized });
         }
 
         serialize() {

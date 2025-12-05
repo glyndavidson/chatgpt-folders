@@ -163,7 +163,7 @@
         setColor(color) {
             this.data.color = color || null;
             this.refreshIcon();
-            this.emitMetadataChange("color");
+            this.emitMetadataChange("folder-color");
         }
 
 
@@ -200,7 +200,7 @@
                 if (commit) {
                     this.data.name = newName;
                     label.textContent = newName;
-                    this.emitMetadataChange("rename");
+                    this.emitMetadataChange("folder-rename");
                 } else {
                     label.textContent = oldName;
                 }

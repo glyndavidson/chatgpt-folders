@@ -609,8 +609,23 @@ const FORCE_FOLDERS_AT_TOP = false; // set true later if you want "folders at to
         makeRootLinksDraggable();
 
         const bindChangeHandlers = () => {
-            const onStructureChange = () => {
-                scheduleSave();
+            const immediateReasons = new Set([
+                "folder-rename",
+                "folder-color",
+                "folder-children",
+                "create-folder",
+                "delete-folder",
+                "move-folder",
+                "expand-all",
+                "collapse-all",
+                "ensure",
+                "move",
+                "remove",
+                "set-order"
+            ]);
+            const onStructureChange = (reason) => {
+                const immediate = immediateReasons.has(reason);
+                scheduleSave(immediate ? { immediate: true } : undefined);
                 if (globalSettings && globalSettings.getForceFoldersTop()) {
                     enforceFoldersTopOrder();
                 }

@@ -151,8 +151,8 @@
         menuBtnEl,
         iconEl,
         data,
-        onMetadataChange: () => this.triggerChange("folder-metadata"),
-        onChildrenChange: () => this.triggerChange("folder-children")
+        onMetadataChange: (reason) => this.triggerChange(reason || "folder-metadata"),
+        onChildrenChange: (reason) => this.triggerChange(reason || "folder-children")
       });
 
       if (rowEl) {

@@ -8,6 +8,7 @@
             this.area = opts.area || "sync";
             this.storageKey = opts.storageKey || "glynFoldersData";
             this._storage = this._detectStorageArea(this.area);
+            this._saveQueue = Promise.resolve();
         }
 
         _detectStorageArea(areaName) {
@@ -50,13 +51,26 @@
             });
         }
 
-        save(data) {
+        save(patch) {
+            if (!patch || typeof patch !== "object") {
+                return Promise.resolve(false);
+            }
+            if (!this._storage) {
+                return Promise.resolve(false);
+            }
+            this._saveQueue = this._saveQueue.then(() => this._applyPatch(patch));
+            return this._saveQueue;
+        }
+
+        _applyPatch(patch) {
             return new Promise((resolve) => {
-                if (!this._storage) {
-                    resolve(false);
-                    return;
-                }
-                this._storage.set({ [this.storageKey]: data }, () => resolve(true));
+                this._storage.get({ [this.storageKey]: {} }, (result) => {
+                    const current = result && typeof result[this.storageKey] === "object"
+                        ? result[this.storageKey]
+                        : {};
+                    const next = Object.assign({}, current, patch);
+                    this._storage.set({ [this.storageKey]: next }, () => resolve(true));
+                });
             });
         }
     }
