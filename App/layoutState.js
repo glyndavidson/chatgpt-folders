@@ -11,10 +11,11 @@
             this.data = this._defaultState();
             this.isRestoring = false;
             this._saveTimer = null;
+            this.sidebarWidth = null;
         }
 
         _defaultState() {
-            return { items: [] };
+            return { items: [], sidebarWidth: null };
         }
 
         _sanitizeState(raw) {
@@ -22,15 +23,18 @@
                 return this._defaultState();
             }
 
-            if (Array.isArray(raw.items)) {
-                return {
-                    items: raw.items
-                        .map(entry => this._sanitizeItem(entry))
-                        .filter(Boolean)
-                };
+            const items = Array.isArray(raw.items)
+                ? raw.items.map(entry => this._sanitizeItem(entry)).filter(Boolean)
+                : null;
+
+            if (!items) {
+                return this._convertLegacyState(raw);
             }
 
-            return this._convertLegacyState(raw);
+            return {
+                items,
+                sidebarWidth: this._normalizeSidebarWidth(raw.sidebarWidth)
+            };
         }
 
         _convertLegacyState(raw) {
@@ -80,7 +84,7 @@
                 }
             });
 
-            return { items };
+            return { items, sidebarWidth: null };
         }
 
         _sanitizeItem(entry) {
@@ -135,6 +139,7 @@
                 : this._defaultState();
 
             this.data = state;
+            this.sidebarWidth = this._normalizeSidebarWidth(state.sidebarWidth);
             const hasData = Array.isArray(state.items) && state.items.length > 0;
             if (hasData) {
                 await this.applyState(state);
@@ -239,7 +244,8 @@
             return {
                 items: this._serializeContainer(
                     this.folderManager ? this.folderManager.historyDiv : null
-                )
+                ),
+                sidebarWidth: this.sidebarWidth || null
             };
         }
 
@@ -275,6 +281,32 @@
 
         hasFolders() {
             return !!(this.folderManager && this.folderManager.folders.length);
+        }
+
+        getSidebarWidth() {
+            return this.sidebarWidth || null;
+        }
+
+        setSidebarWidth(width) {
+            const normalized = this._normalizeSidebarWidth(width);
+            if (normalized === this.sidebarWidth) {
+                return;
+            }
+            this.sidebarWidth = normalized;
+            this.markDirty({ immediate: true });
+        }
+
+        _normalizeSidebarWidth(value) {
+            if (typeof value === "number" && Number.isFinite(value)) {
+                return value;
+            }
+            if (typeof value === "string") {
+                const parsed = parseFloat(value);
+                if (!Number.isNaN(parsed)) {
+                    return parsed;
+                }
+            }
+            return null;
         }
 
         markDirty(options) {

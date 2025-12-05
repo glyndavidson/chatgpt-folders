@@ -13,6 +13,10 @@ const FORCE_FOLDERS_AT_TOP = false; // set true later if you want "folders at to
     const StorageService = ns.StorageService;
     const GlobalSettings = ns.GlobalSettings;
     const LayoutState = ns.LayoutState;
+    const SIDEBAR_MIN_WIDTH = 220;
+    const SIDEBAR_MAX_WIDTH = 520;
+    const SIDEBAR_WIDTH_VAR = "--sidebar-width";
+    const ENABLE_SIDEBAR_RESIZER = true;
 
     let historyDiv = null;
     let historyManager = null;
@@ -30,10 +34,131 @@ const FORCE_FOLDERS_AT_TOP = false; // set true later if you want "folders at to
     let historyObserver = null;
     let containerMonitorTimer = null;
     let reinitPending = false;
+    let sidebarContainer = null;
+    let sidebarResizerEl = null;
+    let sidebarResizeSession = null;
 
     function scheduleSave(opts) {
         if (layoutState) {
             layoutState.markDirty(opts || {});
+        }
+    }
+
+    function findSidebarContainer() {
+        if (!historyDiv) return null;
+        const nav = historyDiv.closest('nav[aria-label="Chat history"]');
+        if (!nav) return null;
+        return (
+            nav.closest('[data-testid="left-sidebar"]') ||
+            nav.closest('[data-testid="left-panel"]') ||
+            nav.closest("aside") ||
+            nav.parentElement ||
+            nav
+        );
+    }
+
+    function applySidebarWidth(width) {
+        if (!ENABLE_SIDEBAR_RESIZER) return;
+        if (!sidebarContainer) return;
+        const root = document.documentElement;
+        if (!root) return;
+        const removeInline = () => {
+            sidebarContainer.style.removeProperty("width");
+            sidebarContainer.style.removeProperty("minWidth");
+            sidebarContainer.style.removeProperty("maxWidth");
+            sidebarContainer.style.removeProperty("flex");
+        };
+        if (typeof width !== "number" || Number.isNaN(width)) {
+            removeInline();
+            root.style.removeProperty(SIDEBAR_WIDTH_VAR);
+            return;
+        }
+        const clamped = Math.max(SIDEBAR_MIN_WIDTH, Math.min(SIDEBAR_MAX_WIDTH, width));
+        removeInline();
+        root.style.setProperty(SIDEBAR_WIDTH_VAR, `${clamped}px`);
+    }
+
+    function teardownSidebarResizer() {
+        if (!ENABLE_SIDEBAR_RESIZER) return;
+        if (sidebarResizerEl && sidebarResizerEl.parentNode) {
+            sidebarResizerEl.parentNode.removeChild(sidebarResizerEl);
+        }
+        sidebarResizerEl = null;
+        if (sidebarContainer) {
+            sidebarContainer.classList.remove("glyn-sidebar-resizable");
+            if (sidebarContainer.dataset && sidebarContainer.dataset.glynSidebarPrevPos === "applied") {
+                sidebarContainer.style.position = "";
+                delete sidebarContainer.dataset.glynSidebarPrevPos;
+            }
+        }
+        sidebarContainer = null;
+    }
+
+    function setupSidebarResizer() {
+        if (!ENABLE_SIDEBAR_RESIZER) return;
+        const container = findSidebarContainer();
+        if (!container) {
+            teardownSidebarResizer();
+            return;
+        }
+        if (sidebarContainer && sidebarContainer !== container) {
+            teardownSidebarResizer();
+        }
+        sidebarContainer = container;
+        const style = window.getComputedStyle(container);
+        if (style.position === "static") {
+            container.dataset.glynSidebarPrevPos = "applied";
+            container.style.position = "relative";
+        }
+        container.classList.add("glyn-sidebar-resizable");
+        if (!sidebarResizerEl) {
+            const handle = document.createElement("div");
+            handle.id = "glyn-sidebar-resizer";
+            handle.title = "Drag to resize";
+            handle.addEventListener("mousedown", onSidebarResizeStart);
+            container.appendChild(handle);
+            sidebarResizerEl = handle;
+        }
+        const storedWidth = layoutState ? layoutState.getSidebarWidth() : null;
+        if (typeof storedWidth === "number") {
+            applySidebarWidth(storedWidth);
+        }
+    }
+
+    function onSidebarResizeStart(event) {
+        if (!ENABLE_SIDEBAR_RESIZER) return;
+        if (event.button !== 0 || !sidebarContainer) return;
+        event.preventDefault();
+        const rect = sidebarContainer.getBoundingClientRect();
+        sidebarResizeSession = {
+            startX: event.clientX,
+            startWidth: rect.width
+        };
+        document.addEventListener("mousemove", onSidebarResizeMove, true);
+        document.addEventListener("mouseup", onSidebarResizeEnd, true);
+        document.body.classList.add("glyn-resizing-sidebar");
+    }
+
+    function onSidebarResizeMove(event) {
+        if (!ENABLE_SIDEBAR_RESIZER) return;
+        if (!sidebarResizeSession || !sidebarContainer) return;
+        const delta = event.clientX - sidebarResizeSession.startX;
+        const width = sidebarResizeSession.startWidth + delta;
+        applySidebarWidth(width);
+    }
+
+    function onSidebarResizeEnd() {
+        if (!ENABLE_SIDEBAR_RESIZER) return;
+        if (!sidebarResizeSession) return;
+        document.removeEventListener("mousemove", onSidebarResizeMove, true);
+        document.removeEventListener("mouseup", onSidebarResizeEnd, true);
+        document.body.classList.remove("glyn-resizing-sidebar");
+        const finalWidth = sidebarContainer
+            ? sidebarContainer.getBoundingClientRect().width
+            : null;
+        sidebarResizeSession = null;
+        if (layoutState && typeof finalWidth === "number") {
+            layoutState.setSidebarWidth(finalWidth);
         }
     }
 
@@ -397,6 +522,9 @@ const FORCE_FOLDERS_AT_TOP = false; // set true later if you want "folders at to
         stopHistoryObserver();
         stopContainerMonitor();
         hideDropMarker();
+        if (ENABLE_SIDEBAR_RESIZER) {
+            teardownSidebarResizer();
+        }
         historyManager = null;
         folderManager = null;
         folderMenu = null;
@@ -428,6 +556,9 @@ const FORCE_FOLDERS_AT_TOP = false; // set true later if you want "folders at to
         });
         globalSettings = new GlobalSettings(storageService);
         layoutState = new LayoutState(storageService, folderManager, historyManager);
+        if (ENABLE_SIDEBAR_RESIZER) {
+            setupSidebarResizer();
+        }
         ensureMessageListener();
         globalSettings.load()
             .then(() => applyGlobalSettings())
@@ -500,6 +631,12 @@ const FORCE_FOLDERS_AT_TOP = false; // set true later if you want "folders at to
                 }
             })
             .finally(() => {
+                if (ENABLE_SIDEBAR_RESIZER) {
+                    const savedWidth = layoutState ? layoutState.getSidebarWidth() : null;
+                    if (typeof savedWidth === "number") {
+                        applySidebarWidth(savedWidth);
+                    }
+                }
                 bindChangeHandlers();
                 observeHistory();
                 startContainerMonitor();
