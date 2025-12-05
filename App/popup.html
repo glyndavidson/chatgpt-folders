@@ -12,6 +12,7 @@
     </header>
     <main>
         <section>
+            <div class="section-title">Behaviour</div>
             <label class="toggle">
                 <input type="checkbox" id="setting-folders-top">
                 <span>Keep folders at top</span>
@@ -28,23 +29,27 @@
                 <span>Fill</span>
             </label>
         </section>
-        <section>
-            <button id="create-folder-btn" type="button">Create New Folder</button>
-        </section>
         <section class="folder-bulk-actions">
             <div class="section-title">Folders</div>
             <div class="button-row">
                 <button id="expand-all-btn" type="button">Expand All</button>
                 <button id="collapse-all-btn" type="button">Collapse All</button>
             </div>
+            <div class="button-row">
+                <button id="create-folder-btn" type="button">Create New Folder</button>
+            </div>
         </section>
-        <section class="support">
-            <p>If you find this extension useful, please consider <a id="support-link" href="https://buymeacoffee.com/glyndavidson" target="_blank" rel="noopener noreferrer">buying me a coffee</a>.</p>
-            <p><a href="https://github.com/glyndavidson/chatgpt-folders" target="_blank" rel="noopener noreferrer">View the project on GitHub</a></p>
+        <section class="folder-bulk-actions">
+            <div class="section-title">Data</div>
             <div class="button-row">
                 <button id="export-data-btn" type="button">Export</button>
                 <button id="import-data-btn" type="button">Import</button>
             </div>
+        </section>
+        <section class="support">
+            <p>If you find this extension useful, please consider <a id="support-link" href="https://buymeacoffee.com/glyndavidson" target="_blank" rel="noopener noreferrer">buying me a coffee</a>.</p>
+            <p><a href="https://github.com/glyndavidson/chatgpt-folders" target="_blank" rel="noopener noreferrer">View the project on GitHub</a></p>
+
         </section>
         <input type="file" id="import-file-input" accept="application/json" style="display:none;" />
         <section id="status" aria-live="polite"></section>
