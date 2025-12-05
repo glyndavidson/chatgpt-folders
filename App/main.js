@@ -17,6 +17,7 @@ const FORCE_FOLDERS_AT_TOP = false; // set true later if you want "folders at to
     const SIDEBAR_MAX_WIDTH = 520;
     const SIDEBAR_WIDTH_VAR = "--sidebar-width";
     const ENABLE_SIDEBAR_RESIZER = true;
+    const ENABLE_SAFE_REINIT = true;
 
     let historyDiv = null;
     let historyManager = null;
@@ -34,9 +35,11 @@ const FORCE_FOLDERS_AT_TOP = false; // set true later if you want "folders at to
     let historyObserver = null;
     let containerMonitorTimer = null;
     let reinitPending = false;
+    let safeModeActive = false;
     let sidebarContainer = null;
     let sidebarResizerEl = null;
     let sidebarResizeSession = null;
+    let sentinelObserver = null;
 
     function scheduleSave(opts) {
         if (layoutState) {
@@ -500,6 +503,7 @@ const FORCE_FOLDERS_AT_TOP = false; // set true later if you want "folders at to
     }
 
     function startContainerMonitor() {
+        if (!ENABLE_SAFE_REINIT) return;
         stopContainerMonitor();
         containerMonitorTimer = setInterval(() => {
             if (!historyDiv || !document.contains(historyDiv)) {
@@ -509,18 +513,69 @@ const FORCE_FOLDERS_AT_TOP = false; // set true later if you want "folders at to
     }
 
     function stopContainerMonitor() {
+        if (!ENABLE_SAFE_REINIT) return;
         if (containerMonitorTimer) {
             clearInterval(containerMonitorTimer);
             containerMonitorTimer = null;
         }
     }
 
+    function disconnectSentinelObserver() {
+        if (sentinelObserver) {
+            sentinelObserver.disconnect();
+            sentinelObserver = null;
+        }
+    }
+
+    function monitorLazyLoadSentinel() {
+        disconnectSentinelObserver();
+        if (!historyDiv) return;
+        const sentinel = historyDiv.querySelector('button[data-testid="history-paging-forward"]') ||
+            historyDiv.querySelector('[data-testid="pager-forward"]');
+        if (!sentinel) return;
+        sentinelObserver = new IntersectionObserver((entries) => {
+            entries.forEach((entry) => {
+                if (entry.isIntersecting) {
+                    console.log("[GlynGPT] Lazy sentinel intersected", { time: Date.now() });
+                }
+            });
+        }, {
+            root: historyDiv,
+            threshold: 0.1
+        });
+        sentinelObserver.observe(sentinel);
+    }
+
+    function enterSafeMode(reason) {
+        if (!ENABLE_SAFE_REINIT) return;
+        if (safeModeActive) return;
+        safeModeActive = true;
+        console.warn("[GlynGPT] Entering safe mode:", reason);
+        if (folderManager) {
+            try {
+                folderManager.suspendNotifications();
+                folderManager.clearAllFolders();
+            } catch (err) {
+                console.warn("[GlynGPT] Failed to clear folders during safe mode", err);
+            } finally {
+                folderManager.resumeNotifications();
+            }
+        }
+    }
+
+    function exitSafeMode() {
+        safeModeActive = false;
+    }
+
     function scheduleReinit(reason) {
+        if (!ENABLE_SAFE_REINIT) return;
+        enterSafeMode(reason);
         if (reinitPending) return;
         reinitPending = true;
         console.warn("[GlynGPT] Reinitialising folders:", reason);
         stopHistoryObserver();
         stopContainerMonitor();
+        disconnectSentinelObserver();
         hideDropMarker();
         if (ENABLE_SIDEBAR_RESIZER) {
             teardownSidebarResizer();
@@ -654,7 +709,9 @@ const FORCE_FOLDERS_AT_TOP = false; // set true later if you want "folders at to
                 }
                 bindChangeHandlers();
                 observeHistory();
+                monitorLazyLoadSentinel();
                 startContainerMonitor();
+                exitSafeMode();
             });
     }
 
