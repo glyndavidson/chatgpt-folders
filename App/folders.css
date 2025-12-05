@@ -164,3 +164,29 @@
   color: #fff;
   border-color: #ffffff26;
 }
+
+#glyn-sidebar-resizer {
+  position: absolute;
+  top: 0;
+  right: -3px;
+  width: 8px;
+  height: 100%;
+  cursor: ew-resize;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 5;
+}
+
+#glyn-sidebar-resizer::after {
+  content: "";
+  width: 2px;
+  height: 48px;
+  border-radius: 2px;
+  background: rgba(255, 255, 255, 0.3);
+}
+
+.glyn-resizing-sidebar {
+  cursor: ew-resize !important;
+  user-select: none;
+}

@@ -113,12 +113,28 @@
       this.anchorEl = anchorEl;
 
       const rect = anchorEl.getBoundingClientRect();
-      const top = rect.bottom + 4;
-      const left = Math.max(rect.left, 8);
+      const margin = 8;
+      let top = rect.bottom + 4;
+      let left = Math.max(rect.left, margin);
 
       this.el.style.top = `${top}px`;
       this.el.style.left = `${left}px`;
       this.el.style.display = "block";
+
+      // Prevent the menu from overflowing past the viewport edges.
+      const menuRect = this.el.getBoundingClientRect();
+      const maxBottom = window.innerHeight - margin;
+      const maxRight = window.innerWidth - margin;
+
+      if (menuRect.bottom > maxBottom) {
+        top = Math.max(margin, rect.top - menuRect.height - 4);
+        this.el.style.top = `${top}px`;
+      }
+
+      if (menuRect.right > maxRight) {
+        left = Math.max(margin, maxRight - menuRect.width);
+        this.el.style.left = `${left}px`;
+      }
 
       this.hideColorPickerRow(); // reset each time
 

@@ -13,6 +13,11 @@ const FORCE_FOLDERS_AT_TOP = false; // set true later if you want "folders at to
     const StorageService = ns.StorageService;
     const GlobalSettings = ns.GlobalSettings;
     const LayoutState = ns.LayoutState;
+    const SIDEBAR_MIN_WIDTH = 220;
+    const SIDEBAR_MAX_WIDTH = 520;
+    const SIDEBAR_WIDTH_VAR = "--sidebar-width";
+    const ENABLE_SIDEBAR_RESIZER = false;
+    const ENABLE_SAFE_REINIT = false;
 
     let historyDiv = null;
     let historyManager = null;
@@ -30,10 +35,133 @@ const FORCE_FOLDERS_AT_TOP = false; // set true later if you want "folders at to
     let historyObserver = null;
     let containerMonitorTimer = null;
     let reinitPending = false;
+    let safeModeActive = false;
+    let sidebarContainer = null;
+    let sidebarResizerEl = null;
+    let sidebarResizeSession = null;
+    let sentinelObserver = null;
 
     function scheduleSave(opts) {
         if (layoutState) {
             layoutState.markDirty(opts || {});
+        }
+    }
+
+    function findSidebarContainer() {
+        if (!historyDiv) return null;
+        const nav = historyDiv.closest('nav[aria-label="Chat history"]');
+        if (!nav) return null;
+        return (
+            nav.closest('[data-testid="left-sidebar"]') ||
+            nav.closest('[data-testid="left-panel"]') ||
+            nav.closest("aside") ||
+            nav.parentElement ||
+            nav
+        );
+    }
+
+    function applySidebarWidth(width) {
+        if (!ENABLE_SIDEBAR_RESIZER) return;
+        if (!sidebarContainer) return;
+        const root = document.documentElement;
+        if (!root) return;
+        const removeInline = () => {
+            sidebarContainer.style.removeProperty("width");
+            sidebarContainer.style.removeProperty("minWidth");
+            sidebarContainer.style.removeProperty("maxWidth");
+            sidebarContainer.style.removeProperty("flex");
+        };
+        if (typeof width !== "number" || Number.isNaN(width)) {
+            removeInline();
+            root.style.removeProperty(SIDEBAR_WIDTH_VAR);
+            return;
+        }
+        const clamped = Math.max(SIDEBAR_MIN_WIDTH, Math.min(SIDEBAR_MAX_WIDTH, width));
+        removeInline();
+        root.style.setProperty(SIDEBAR_WIDTH_VAR, `${clamped}px`);
+    }
+
+    function teardownSidebarResizer() {
+        if (!ENABLE_SIDEBAR_RESIZER) return;
+        if (sidebarResizerEl && sidebarResizerEl.parentNode) {
+            sidebarResizerEl.parentNode.removeChild(sidebarResizerEl);
+        }
+        sidebarResizerEl = null;
+        if (sidebarContainer) {
+            sidebarContainer.classList.remove("glyn-sidebar-resizable");
+            if (sidebarContainer.dataset && sidebarContainer.dataset.glynSidebarPrevPos === "applied") {
+                sidebarContainer.style.position = "";
+                delete sidebarContainer.dataset.glynSidebarPrevPos;
+            }
+        }
+        sidebarContainer = null;
+    }
+
+    function setupSidebarResizer() {
+        if (!ENABLE_SIDEBAR_RESIZER) return;
+        const container = findSidebarContainer();
+        if (!container) {
+            teardownSidebarResizer();
+            return;
+        }
+        if (sidebarContainer && sidebarContainer !== container) {
+            teardownSidebarResizer();
+        }
+        sidebarContainer = container;
+        const style = window.getComputedStyle(container);
+        if (style.position === "static") {
+            container.dataset.glynSidebarPrevPos = "applied";
+            container.style.position = "relative";
+        }
+        container.classList.add("glyn-sidebar-resizable");
+        if (!sidebarResizerEl) {
+            const handle = document.createElement("div");
+            handle.id = "glyn-sidebar-resizer";
+            handle.title = "Drag to resize";
+            handle.addEventListener("mousedown", onSidebarResizeStart);
+            container.appendChild(handle);
+            sidebarResizerEl = handle;
+        }
+        const storedWidth = layoutState ? layoutState.getSidebarWidth() : null;
+        if (typeof storedWidth === "number") {
+            applySidebarWidth(storedWidth);
+        }
+    }
+
+    function onSidebarResizeStart(event) {
+        if (!ENABLE_SIDEBAR_RESIZER) return;
+        if (event.button !== 0 || !sidebarContainer) return;
+        event.preventDefault();
+        const rect = sidebarContainer.getBoundingClientRect();
+        sidebarResizeSession = {
+            startX: event.clientX,
+            startWidth: rect.width
+        };
+        document.addEventListener("mousemove", onSidebarResizeMove, true);
+        document.addEventListener("mouseup", onSidebarResizeEnd, true);
+        document.body.classList.add("glyn-resizing-sidebar");
+    }
+
+    function onSidebarResizeMove(event) {
+        if (!ENABLE_SIDEBAR_RESIZER) return;
+        if (!sidebarResizeSession || !sidebarContainer) return;
+        const delta = event.clientX - sidebarResizeSession.startX;
+        const width = sidebarResizeSession.startWidth + delta;
+        applySidebarWidth(width);
+    }
+
+    function onSidebarResizeEnd() {
+        if (!ENABLE_SIDEBAR_RESIZER) return;
+        if (!sidebarResizeSession) return;
+        document.removeEventListener("mousemove", onSidebarResizeMove, true);
+        document.removeEventListener("mouseup", onSidebarResizeEnd, true);
+        document.body.classList.remove("glyn-resizing-sidebar");
+        const finalWidth = sidebarContainer
+            ? sidebarContainer.getBoundingClientRect().width
+            : null;
+        sidebarResizeSession = null;
+        if (layoutState && typeof finalWidth === "number") {
+            layoutState.setSidebarWidth(finalWidth);
         }
     }
 
@@ -375,6 +503,7 @@ const FORCE_FOLDERS_AT_TOP = false; // set true later if you want "folders at to
     }
 
     function startContainerMonitor() {
+        if (!ENABLE_SAFE_REINIT) return;
         stopContainerMonitor();
         containerMonitorTimer = setInterval(() => {
             if (!historyDiv || !document.contains(historyDiv)) {
@@ -384,19 +513,75 @@ const FORCE_FOLDERS_AT_TOP = false; // set true later if you want "folders at to
     }
 
     function stopContainerMonitor() {
+        if (!ENABLE_SAFE_REINIT) return;
         if (containerMonitorTimer) {
             clearInterval(containerMonitorTimer);
             containerMonitorTimer = null;
         }
     }
 
+    function disconnectSentinelObserver() {
+        if (sentinelObserver) {
+            sentinelObserver.disconnect();
+            sentinelObserver = null;
+        }
+    }
+
+    function monitorLazyLoadSentinel() {
+        disconnectSentinelObserver();
+        if (!historyDiv) return;
+        const sentinel = historyDiv.querySelector('button[data-testid="history-paging-forward"]') ||
+            historyDiv.querySelector('[data-testid="pager-forward"]');
+        if (!sentinel) return;
+        sentinelObserver = new IntersectionObserver((entries) => {
+            entries.forEach((entry) => {
+                if (entry.isIntersecting) {
+                    console.log("[GlynGPT] Lazy sentinel intersected", { time: Date.now() });
+                }
+            });
+        }, {
+            root: historyDiv,
+            threshold: 0.1
+        });
+        sentinelObserver.observe(sentinel);
+    }
+
+    function enterSafeMode(reason) {
+        if (safeModeActive) return;
+        safeModeActive = true;
+        console.warn("[GlynGPT] Entering safe mode:", reason);
+        if (folderManager) {
+            try {
+                folderManager.suspendNotifications();
+                folderManager.clearAllFolders();
+            } catch (err) {
+                console.warn("[GlynGPT] Failed to clear folders during safe mode", err);
+            } finally {
+                folderManager.resumeNotifications();
+            }
+        }
+    }
+
+    function exitSafeMode() {
+        safeModeActive = false;
+    }
+
     function scheduleReinit(reason) {
+        if (!ENABLE_SAFE_REINIT) {
+            console.warn("[GlynGPT] Reinit requested but safe reinit is disabled:", reason);
+            return;
+        }
+        enterSafeMode(reason);
         if (reinitPending) return;
         reinitPending = true;
         console.warn("[GlynGPT] Reinitialising folders:", reason);
         stopHistoryObserver();
         stopContainerMonitor();
+        disconnectSentinelObserver();
         hideDropMarker();
+        if (ENABLE_SIDEBAR_RESIZER) {
+            teardownSidebarResizer();
+        }
         historyManager = null;
         folderManager = null;
         folderMenu = null;
@@ -428,6 +613,9 @@ const FORCE_FOLDERS_AT_TOP = false; // set true later if you want "folders at to
         });
         globalSettings = new GlobalSettings(storageService);
         layoutState = new LayoutState(storageService, folderManager, historyManager);
+        if (ENABLE_SIDEBAR_RESIZER) {
+            setupSidebarResizer();
+        }
         ensureMessageListener();
         globalSettings.load()
             .then(() => applyGlobalSettings())
@@ -478,8 +666,23 @@ const FORCE_FOLDERS_AT_TOP = false; // set true later if you want "folders at to
         makeRootLinksDraggable();
 
         const bindChangeHandlers = () => {
-            const onStructureChange = () => {
-                scheduleSave();
+            const immediateReasons = new Set([
+                "folder-rename",
+                "folder-color",
+                "folder-children",
+                "create-folder",
+                "delete-folder",
+                "move-folder",
+                "expand-all",
+                "collapse-all",
+                "ensure",
+                "move",
+                "remove",
+                "set-order"
+            ]);
+            const onStructureChange = (reason) => {
+                const immediate = immediateReasons.has(reason);
+                scheduleSave(immediate ? { immediate: true } : undefined);
                 if (globalSettings && globalSettings.getForceFoldersTop()) {
                     enforceFoldersTopOrder();
                 }
@@ -500,9 +703,17 @@ const FORCE_FOLDERS_AT_TOP = false; // set true later if you want "folders at to
                 }
             })
             .finally(() => {
+                if (ENABLE_SIDEBAR_RESIZER) {
+                    const savedWidth = layoutState ? layoutState.getSidebarWidth() : null;
+                    if (typeof savedWidth === "number") {
+                        applySidebarWidth(savedWidth);
+                    }
+                }
                 bindChangeHandlers();
                 observeHistory();
+                monitorLazyLoadSentinel();
                 startContainerMonitor();
+                exitSafeMode();
             });
     }
 
